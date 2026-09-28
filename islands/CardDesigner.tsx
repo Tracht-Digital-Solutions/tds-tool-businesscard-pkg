@@ -198,11 +198,16 @@ export default function CardDesigner({ lang = "de" as Lang }: { lang?: Lang }) {
             {/* The shared control geometry, like every other text control in
                 the pack — a colour input with no `field` class loses its
                 border to Tailwind's preflight and reads as a floating swatch.
-                The width is the one local decision: a full-width colour picker
-                is a bar nobody reads as a colour. */}
+
+                The width is an inline style and NOT a `w-24` utility:
+                `.field-boxed` carries `width: 100%` and comes from tds-shared
+                UNLAYERED, so it beats any utility class regardless of order.
+                With the utility the picker rendered as a full-width bar,
+                which is the one shape nobody reads as a colour. */}
             <input
               type="color"
-              className="field-boxed w-24"
+              className="field-boxed"
+              style={{ width: "6rem" }}
               value={spec.accent}
               onChange={(event) => set("accent", event.target.value)}
               aria-describedby={adjusted ? "bc-accent-note" : undefined}
