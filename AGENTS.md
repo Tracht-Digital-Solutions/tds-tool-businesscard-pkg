@@ -28,6 +28,15 @@ about unique ids, package-subpath components and 1.x stability are set there, no
 
 ## Gotchas / invariants
 
+- **`src/card.ts` is PUBLISHED, and it has to be.** `files` lists it by name
+  beside `dist`, `tools` and `islands`. The island ships as raw source and is
+  compiled by the consuming site, so its `../src/card` import has to resolve in
+  the TARBALL — not just in this checkout. It did not, once: the first release
+  shipped without `src`, every local check passed, and `tds-tools-frontend`
+  failed its build with `Could not resolve '../src/card'`. Nothing here can
+  catch that; `npm pack --dry-run` can, and is the check before a release that
+  moves files around.
+
 - **`drawCard` must not read the scale for anything but size.** The
   "preview is the export" test compares the two scales' call lists with the
   `scale` call stripped; a branch on `scale` breaks the guarantee and the test.

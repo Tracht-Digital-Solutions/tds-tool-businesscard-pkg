@@ -9,6 +9,7 @@
     "dist",
     "tools",
     "islands",
+    "src/card.ts",
     "README.md"
   ],
   "exports": {
