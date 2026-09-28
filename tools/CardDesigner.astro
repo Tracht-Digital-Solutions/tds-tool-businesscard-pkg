@@ -1,0 +1,21 @@
+---
+// Visitenkarten-Designer tool shell. The work (the canvas renderer and the
+// controls) lives in the hydrated island; this shell is just the card chrome
+// the site's tool-page template drops into place.
+//
+// `lang` comes from that template so the island renders its labels in the
+// page's language. It defaults to German at both levels: a consumer that
+// renders the shell without the prop gets the German tool, which is what the
+// site shipped before the English tree existed.
+import CardDesigner from "../islands/CardDesigner.tsx";
+
+interface Props {
+  lang?: "de" | "en";
+}
+
+const { lang = "de" } = Astro.props;
+---
+
+<div class="tool tool--businesscard">
+  <CardDesigner client:load lang={lang} />
+</div>
