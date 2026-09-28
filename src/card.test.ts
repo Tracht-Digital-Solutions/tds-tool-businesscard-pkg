@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   CARD_MM,
+  SHADOW_INK,
   CORNERS,
   DEFAULT_SPEC,
   PRINT_SCALE,
@@ -23,7 +24,7 @@ import {
  * "preview is the export" promise without a browser.
  */
 function recorder() {
-  const calls: Array<{ op: string; args: unknown[]; fill?: string; font?: string }> = [];
+  const calls: Array<{ op: string; args: unknown[]; fill?: string; font?: string; blur?: number }> = [];
   const ctx = {
     canvas: { width: 0, height: 0 },
     fillStyle: "",
@@ -41,7 +42,7 @@ function recorder() {
     beginPath: () => calls.push({ op: "beginPath", args: [] }),
     roundRect: (...args: unknown[]) => calls.push({ op: "roundRect", args }),
     rect: (...args: unknown[]) => calls.push({ op: "rect", args }),
-    fill: () => calls.push({ op: "fill", args: [], fill: ctx.fillStyle }),
+    fill: () => calls.push({ op: "fill", args: [], fill: ctx.fillStyle, blur: ctx.shadowBlur }),
     clip: () => calls.push({ op: "clip", args: [] }),
     fillText: (...args: unknown[]) => calls.push({ op: "fillText", args, fill: ctx.fillStyle, font: ctx.font }),
     measureText: (text: string) => ({ width: text.length * 1.6 }),
@@ -49,6 +50,18 @@ function recorder() {
   (ctx as unknown as { __calls: typeof calls }).__calls = calls;
   return { ctx, calls };
 }
+
+/**
+ * The blur the card was actually FILLED with.
+ *
+ * Not the context's final value: `drawCard` clears the shadow again once the
+ * ground is down, so whatever it is set to at the end is zero by design.
+ */
+const blurAtFill = (scale: number) => {
+  const { ctx, calls } = recorder();
+  drawCard(ctx, { ...DEFAULT_SPEC, shadow: "soft" }, scale);
+  return calls.find((call) => call.op === "fill" && (call.blur ?? 0) > 0)?.blur ?? 0;
+};
 
 const draw = (spec: Partial<CardSpec> = {}, scale = 5) => {
   const { ctx, calls } = recorder();
@@ -165,6 +178,37 @@ describe("the surfaces", () => {
 
   it("handles a three-digit hex the colour input may hand it", () => {
     expect(() => readableAccent("#abc", "navy")).not.toThrow();
+  });
+});
+
+describe("the shadow", () => {
+  /**
+   * Navy under a navy card is a card with no shadow, and that is what the
+   * first render produced — the site's hard offset is navy and the surface
+   * list has a navy ground. A shadow has to differ from the thing casting it.
+   */
+  it("casts a colour that can be seen on its own surface", () => {
+    for (const surface of Object.keys(SURFACES) as Array<keyof typeof SURFACES>) {
+      expect(contrast(SHADOW_INK[surface], SURFACES[surface].ground), surface).toBeGreaterThanOrEqual(2.5);
+    }
+  });
+
+  /**
+   * `shadowBlur` and `shadowOffset*` are the one part of a 2D context the
+   * transform does not reach — they are device pixels whatever `ctx.scale()`
+   * says. Left in millimetres the soft shadow came out as a 2.5px blur offset
+   * by a pixel, i.e. nothing. They have to grow with the canvas, or the export
+   * stops being the preview.
+   */
+  it("grows the soft shadow with the canvas", () => {
+    expect(blurAtFill(5)).toBeGreaterThan(0);
+    expect(blurAtFill(10)).toBeCloseTo(blurAtFill(5) * 2, 5);
+  });
+
+  it("draws nothing extra when there is no shadow", () => {
+    const fills = (shadow: CardSpec["shadow"]) =>
+      draw({ shadow, showBar: false, layout: "left" }).filter((call) => call.op === "fill").length;
+    expect(fills("hard")).toBeGreaterThan(fills("none"));
   });
 });
 

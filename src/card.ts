@@ -80,6 +80,29 @@ export const SURFACES: Record<CardSurface, { ground: string; ink: string; muted:
 export const CORNERS: Record<CardCorner, number> = { sharp: 0, soft: 1.5, round: 4 };
 
 /**
+ * The shadow's own colour, per surface.
+ *
+ * The site's hard shadow is navy, and navy under a navy card is a card with no
+ * shadow — which is what the first render produced. Making it darker does not
+ * rescue it either: a navy ground sits at 0.015 luminance, so even black only
+ * reaches 1.3:1 against it. There is no dark left to use.
+ *
+ * So a dark card casts a LIGHT shadow, which is exactly what the site itself
+ * does in dark mode (`--tds-shadow-ink` flips to a pale blue there). The edge
+ * of the card stays findable either way, which is the only thing the offset is
+ * for.
+ */
+export const SHADOW_INK: Record<CardSurface, string> = {
+  paper: "#050f68",
+  sand: "#050f68",
+  navy: "#93a7ff",
+  ink: "#8f8fa8",
+};
+
+/** Soft-shadow geometry, in mm like everything else here. */
+const SOFT_SHADOW = { blur: 2.5, offsetX: 0.8, offsetY: 1.4 } as const;
+
+/**
  * On a dark ground the picked accent can fall below readable contrast, and the
  * picker has no way to know that. Rather than refusing the colour, the card
  * lightens it until it carries — the visitor keeps their colour and keeps a
@@ -161,14 +184,20 @@ export function drawCard(ctx: Ctx, spec: CardSpec, scale: number): void {
   // canvas shadow API: a hard offset is a second rectangle, and asking for a
   // blur of 0 gives a different edge in every engine.
   if (spec.shadow === "hard") {
-    ctx.fillStyle = "#050f68";
+    ctx.fillStyle = SHADOW_INK[spec.surface];
     path(ctx, pad, pad, CARD_MM.width, CARD_MM.height, radius);
     ctx.fill();
   } else if (spec.shadow === "soft") {
     ctx.shadowColor = "rgba(0,0,0,0.22)";
-    ctx.shadowBlur = 2.5;
-    ctx.shadowOffsetX = 0.8;
-    ctx.shadowOffsetY = 1.4;
+    // `shadowBlur` and `shadowOffset*` are the one part of a 2D context the
+    // transform does NOT reach: they are always device pixels, whatever
+    // `ctx.scale()` says. Left in millimetres they came out as a 2.5px blur
+    // offset by one pixel — a soft shadow that was, on screen, no shadow.
+    // Multiplying here is what keeps them the same SIZE at every scale, which
+    // is the promise the preview and the export are built on.
+    ctx.shadowBlur = SOFT_SHADOW.blur * scale;
+    ctx.shadowOffsetX = SOFT_SHADOW.offsetX * scale;
+    ctx.shadowOffsetY = SOFT_SHADOW.offsetY * scale;
   }
 
   ctx.fillStyle = ground;
