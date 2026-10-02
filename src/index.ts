@@ -23,7 +23,7 @@ export default defineToolPack({
       keywords: ["visitenkarte", "designer", "vorschau", "druck", "business card", "png"],
       component: "@tracht-digital-solutions/tds-tool-businesscard/tools/CardDesigner.astro",
       seo: {
-        title: "Visitenkarten-Designer — gestalten und ansehen, ohne Anmeldung",
+        title: "Visitenkarten-Designer — gestalten und als PNG herunterladen",
         description:
           "Visitenkarte im Browser gestalten: Farben, Ecken, Schatten und Aufteilung anpassen, Vorschau in Echtzeit, PNG-Download in 300 dpi. Alles lokal, keine Anmeldung.",
         jsonLdType: "WebApplication",
