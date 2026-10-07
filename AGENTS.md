@@ -1,63 +1,40 @@
 # AGENTS.md — tds-tool-businesscard-pkg
 
-Authoritative architecture/gotcha doc for this repo. Read before non-trivial changes.
-
-## What this is
-
-A **tool pack** for the public tools platform: one tool, the Visitenkarten-Designer.
+Tool pack for the public tools platform with one tool, the Visitenkarten-Designer.
 It builds against `@tracht-digital-solutions/tds-tools-contract` and is composed into
-`tds-tools-frontend` at build time. Read that contract's `AGENTS.md` first — the rules
-about unique ids, package-subpath components and 1.x stability are set there, not here.
+`tds-tools-frontend` at build time. Nothing leaves the browser: no upload, no account,
+no network call.
 
-## Architecture
-
-- **One renderer, two scales.** `src/card.ts` draws the card to a 2D context in
-  MILLIMETRES; `scale` is px per mm. The preview canvas calls it at 5 px/mm, the
-  download calls it at 300 dpi. There is no second implementation for the export,
-  which is the point: two renderers for one design drift, and they drift in the
-  details nobody re-checks — so a file that differs from the approved card is not
-  expressible here.
-- **No CSS.** Like every pack, styling comes from `tds-shared` through the site.
-  Controls carry `field-boxed`, `btn btn-*`, `chip` — `npm run lint:primitives`
-  fails the build on a bare one.
-- **No runtime dependencies.** The colour maths (luminance, contrast, HSL) is
-  ~40 lines at the bottom of `card.ts` rather than a colour library: a pack's
-  dependency is installed into every consuming site.
-- **Nothing leaves the browser.** No upload, no account, no network call at all.
-  Anything that changes that changes what the tool's SEO copy promises.
-
-## Gotchas / invariants
-
-- **`src/card.ts` is PUBLISHED, and it has to be.** `files` lists it by name
-  beside `dist`, `tools` and `islands`. The island ships as raw source and is
-  compiled by the consuming site, so its `../src/card` import has to resolve in
-  the TARBALL — not just in this checkout. It did not, once: the first release
-  shipped without `src`, every local check passed, and `tds-tools-frontend`
-  failed its build with `Could not resolve '../src/card'`. Nothing here can
-  catch that; `npm pack --dry-run` can, and is the check before a release that
-  moves files around.
-
-- **`drawCard` must not read the scale for anything but size.** The
-  "preview is the export" test compares the two scales' call lists with the
-  `scale` call stripped; a branch on `scale` breaks the guarantee and the test.
-- **The card is `role="presentation"`.** Every word on it is in the form above
-  it; announcing the canvas as well would read the card out twice.
-- **An accent is lightened, never refused.** A dark red vanishes on the navy
-  surface and the colour input cannot know that. `readableAccent` lifts it until
-  it reaches 3:1 and the visitor keeps their colour (`card.test.ts` holds both
-  directions: it lifts what needs lifting and touches nothing else).
-- **Surface pairs are fixed.** Ground and ink ship together so contrast cannot be
-  lost by combining them; the test asserts 7:1 for ink and 3:1 for muted.
-- **CI is npm-only.** `npm install --no-package-lock`, never `npm ci`.
-  Push to `main` publishes a patch — do NOT bump the version by hand for a patch
-  and do not dispatch a second release; see the tools-platform release notes.
+The platform rules (unique ids, package-subpath components, contract stability)
+live in `tds-tools-contract-pkg/AGENTS.md`. Read that first.
 
 ## Commands
 
 ```bash
-npm install --no-package-lock
-npm run build
-npm run type-check
-npm run test:run
-npm run lint:primitives
+npm install --no-package-lock   # never npm ci; CI has no lockfile
+npm run build                   # tsup
+npm run type-check              # tsc
+npm run test:run                # vitest
+npm run lint:primitives         # fails on a control without a shared class
+npm pack --dry-run              # before any release that moves files around
 ```
+
+## Hard rules
+
+- **Every push to `main` publishes a `@latest` patch** and rebuilds `tds-tools-frontend`.
+  Don't bump the version by hand for a patch, and don't dispatch a second release.
+  A docs-only commit carries `[skip ci]`.
+- One renderer for preview and export (`src/card.ts`). Never add a second one.
+- `src/card.ts` must stay in `files`; the island imports it from the tarball.
+- No runtime dependencies, no CSS, no network calls.
+- Stay inside the `0.1.x` line. The site pins `^0.1.4`, so a minor bump needs a coordinated repin.
+
+## Topic files
+
+| File | Read before |
+|---|---|
+| [docs/agents/architecture.md](docs/agents/architecture.md) | Changing the renderer, colours, `files` or dependencies |
+| [docs/agents/conventions.md](docs/agents/conventions.md) | Touching any markup or styling in `islands/` or `tools/` |
+| [docs/agents/testing.md](docs/agents/testing.md) | Writing or changing tests |
+
+Workspace rules: `../CLAUDE.md`. Cross-repo state: `../MIGRATION-STATUS.md`.
