@@ -21,7 +21,7 @@ npm pack --dry-run              # before any release that moves files around
 
 ## Hard rules
 
-- **Every push to `main` publishes a `@latest` patch** and rebuilds `tds-tools-frontend`.
+- **Every push to `main` publishes a `@latest` patch** and deploys `tds-tools-frontend` (dispatches its `release.yml`).
   Don't bump the version by hand for a patch, and don't dispatch a second release.
   A docs-only commit carries `[skip ci]`.
 - One renderer for preview and export (`src/card.ts`). Never add a second one.
