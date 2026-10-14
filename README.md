@@ -45,3 +45,14 @@ npm run lint:primitives  # kein Bedienelement ohne die geteilten Klassen
 ```
 
 Mehr zu den Invarianten: `AGENTS.md`.
+
+## Lizenz / License
+
+**Öffentlich einsehbar, alle Rechte vorbehalten.** Der Code kann gelesen und
+zur Beurteilung der Programmierkenntnisse betrachtet werden. Es besteht keine
+allgemeine Erlaubnis zum Kopieren, Verändern oder kommerziellen Weiterverwenden.
+Die vollständigen Bedingungen und Ausnahmen stehen in [LICENSE](LICENSE).
+
+**Publicly viewable, all rights reserved.** Public access permits inspection of
+the code, but grants no general permission to copy, modify or commercially reuse
+it. See [LICENSE](LICENSE) for the complete terms and exceptions.
