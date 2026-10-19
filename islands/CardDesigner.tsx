@@ -15,6 +15,7 @@ import {
   type CardSpec,
   type CardSurface,
 } from "../src/card";
+import { downloadUrl } from "@tracht-digital-solutions/tds-shared/download";
 
 /** See the tools-site convention: labels are translated, logic is not. */
 type Lang = "de" | "en";
@@ -136,10 +137,8 @@ export default function CardDesigner({ lang = "de" as Lang }: { lang?: Lang }) {
     const ctx = out.getContext("2d");
     if (!ctx) return;
     drawCard(ctx as unknown as Parameters<typeof drawCard>[0], spec, PRINT_SCALE);
-    const a = document.createElement("a");
-    a.href = out.toDataURL("image/png");
-    a.download = "visitenkarte.png";
-    a.click();
+    // Attached before the click (tds-shared): Firefox ignores a detached one.
+    downloadUrl(out.toDataURL("image/png"), "visitenkarte.png");
   };
 
   /** The picker's colour, and the one the card actually uses. */
